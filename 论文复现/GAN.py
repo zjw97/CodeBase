@@ -25,7 +25,7 @@ def parse_args():
     parser.add_argument("--img_size", type=int, default=28, help="size of each image dimension")
     parser.add_argument("--channels", type=int, default=1, help="number of image channels")
     parser.add_argument("--sample_interval", type=int, default=400, help="interval between image samples")
-    parser.add_argument("--results_dir", type=str, default="./result_images", help="directory to save the results")
+    parser.add_argument("--results_dir", type=str, default="./linear_gan_result", help="directory to save the results")
     args = parser.parse_args()
     return args
 
@@ -91,7 +91,7 @@ dataloader = torch.utils.data.DataLoader(
     datasets.MNIST("/home/zhangming/Datasets", train=True, download=True,
                    transform=transforms.Compose([
                        transforms.ToTensor(),
-                       transforms.Normalize((0.5), (0.5))
+                       transforms.Normalize((0.5), (0.5)),
                    ])),
     batch_size=args.batch_size, shuffle=True, drop_last=True)
 
@@ -145,12 +145,12 @@ for epoch in range(args.n_epochs):
         print("[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f] "
               %(epoch, args.n_epochs, i, len(dataloader), d_loss.data.cpu(), g_loss.data.cpu()))
         print("[PRO_D_real: %f]\t [PRO_D_fake: %f] " %(torch.mean(PRO_D_real.data.cpu()),
-            torch.mean(PRO_D_fake.data.cpu()) ))
+            torch.mean(PRO_D_fake.data.cpu())))
 
         batches_done = epoch * len(dataloader) + i
         if batches_done % args.sample_interval == 0:
-            save_image(gen_imgs.data[: 25], args.results_dir + "/%d-%d.png"
-                       %(epoch, batches_done), nrow=5, normalize=True)
+            save_image(gen_imgs.data[: 64], args.results_dir + "/%d-%d.png"
+                       %(epoch, batches_done), nrow=8, normalize=True)
 
 
 
