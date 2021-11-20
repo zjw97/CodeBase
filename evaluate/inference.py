@@ -36,3 +36,38 @@ def nms(bboxes, scores, threshold=0.5):
             break
         order = order[idx+1]  # 修补索引之间额差值
     return torch.LongTensor(keep)  #  Pytorch的索引值为LongTensor
+
+
+def calc_iou_tensor(bbox1, bbox2):
+    """
+    Args:
+        Calculation IOU based on two box tensor
+        reference to https://github.com/NVIDIA/DeepLearningExamples/blob/master/PyTorch/Detection/SSD/ssd/utils.py
+        bbox1:  shape(N, 4)
+        bbox2:  shape(M, 4)
+    Returns:
+        iou: shape(N, M)
+
+    """
+
+    N = bbox1.size(0)
+    M = bbox2.size(0)
+
+    be1 = bbox1.unsqueeze(1).expand(-1, M, -1)
+    be2 = bbox2.unsqueeze(0).expand(N, -1, -1)
+
+    lt = torch.max(be1[:, :, :2], be2[:, :, :2]) # xmin, ymin
+    rb = torch.min(be1[:, :, 2:], be2[:, :, 2:]) # xmax, ymax
+
+    delta = rb - lt  # 直接对应位置相减求得width， height
+    delta[delta < 0] = 0
+
+    inter = delta[:, :, 0] * delta[:, :, 1]
+
+    delta1 = be1[:, :, 2:] - be1[:, :, :2]
+    area1 = delta1[:, :, 0] * delta[:, :, 1]
+    delta2 = be2[:, :, 2:] - be2[:, :, :2]
+    area2 = delta2[:, :, 0] * delta2[:, :, 1]
+
+    iou = inter / (area1 + area2 - inter)
+    return iou

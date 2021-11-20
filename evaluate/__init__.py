@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
-from .visualize import draw_gt_bboxes, draw_det_bboxes
-from .inference import nms
+from .visualize import *
+from .inference import *
 
-__all__ = ["draw_det_bboxes", "draw_gt_bboxes", "nms"]
+
+__all__ = ["draw_rectangle", "put_text", "nms", "putImgToOne"]
