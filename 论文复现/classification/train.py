@@ -46,8 +46,6 @@ class AveragerMeter():
         self.sum = 0
 
     def update(self, val, n):
-        if val == 0:
-            return
         self.val = val
         self.total += n
         self.sum += val * n
@@ -82,7 +80,7 @@ def eval(epoch, model, criterion, val_dl):
     losses = AveragerMeter()
     accuracy = AveragerMeter()
     with torch.no_grad():
-        for iter, (img, label) in val_dl:
+        for iter, (img, label) in enumerate(val_dl):
             img = img.cuda()
             label = label.cuda()
             pred = model(img)
