@@ -7,12 +7,12 @@ import numpy as np
 
 
 
-def draw_rectangle(image, org1, org2, color):
-    cv2.rectangle(img=image, pt1=org1, pt2=org2, color=color, thickness=1, lineType=cv2.LINE_4)
+def draw_rectangle(image, org1, org2, color, thickness=1):
+    cv2.rectangle(img=image, pt1=org1, pt2=org2, color=color, thickness=thickness, lineType=cv2.LINE_4)
     return image
 
 def put_text(img, text, org, color=(0, 0, 255)):
-    cv2.putText(img, text, org, fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1.2,
+    cv2.putText(img, text, org, fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1.,
                 color=color, thickness=1, lineType=cv2.LINE_8)
 
 
@@ -40,16 +40,16 @@ def putImgToOne(all_images: list, n_cols=2):
     x_space = 5
     y_space = 5
 
-    oneImage = np.zeros((n_rows * img_max_height + y_space * (n_cols - 1),
+    oneImage = np.zeros((n_rows * img_max_height + y_space * (n_rows - 1),
                          n_cols * img_max_width + x_space * (n_cols - 1), 3)).astype(np.uint8)
 
     cnt_imgs = 0
     for i in range(n_rows):
         for j in range(n_cols):
-            if cnt_imgs > num_imgs:
+            if cnt_imgs >= num_imgs:
                 break
 
-            img = all_images[i]
+            img = all_images[cnt_imgs]
             height, width, channel = img.shape
             if channel == 1:
                 img_new = np.zeros((height, width, 3)).astype(np.uint8)

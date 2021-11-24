@@ -56,8 +56,8 @@ def calc_iou_tensor(bbox1, bbox2):
     be1 = bbox1.unsqueeze(1).expand(-1, M, -1)
     be2 = bbox2.unsqueeze(0).expand(N, -1, -1)
 
-    lt = torch.max(be1[:, :, :2], be2[:, :, :2]) # xmin, ymin
-    rb = torch.min(be1[:, :, 2:], be2[:, :, 2:]) # xmax, ymax
+    lt = torch.max(be1[:, :, :2], be2[:, :, :2])  # xmin, ymin
+    rb = torch.min(be1[:, :, 2:], be2[:, :, 2:])  # xmax, ymax
 
     delta = rb - lt  # 直接对应位置相减求得width， height
     delta[delta < 0] = 0
@@ -71,3 +71,19 @@ def calc_iou_tensor(bbox1, bbox2):
 
     iou = inter / (area1 + area2 - inter)
     return iou
+
+
+class AveragerMeter():
+    def __init__(self):
+        self.val = 0
+        self.total = 0
+        self.avg = 0
+        self.sum = 0
+
+    def update(self, val, n):
+        self.val = val
+        self.total += n
+        self.sum += val * n
+        self.avg = self.sum / self.total
+
+
