@@ -6,16 +6,22 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
 from torchvision.transforms import transforms
+import tensorboardX
 
-from models import vgg16
+from models.vgg import vgg16
+from models.resnet import resnet50
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-b", "--batch_size", type=int, default=16)
+    parser.add_argument("-b", "--batch_size", type=int, default=2)
     parser.add_argument("-gpu", action='store_true', default=False)
     parser.add_argument("-lr", type=float, default=0.01)
     parser.add_argument("-epoch", type=int, default=64)
+    parser.add_argument("-save_dir", type=str, default="./vgg_cifar10")
+    parser.add_argument("-use_bn", action="store_true", default=False)
+    parser.add_argument("-pretrained", action="store_true", default=False)
+
     args = parser.parse_args()
     return args
 
@@ -51,16 +57,18 @@ class AveragerMeter():
         self.sum += val * n
         self.avg = self.sum / self.total
 
-def train_one_epoch(epoch, model, optimizer, scheduler, criterion, train_dl):
+def train_one_epoch(epoch, model, optimizer, scheduler, criterion, train_dl, writer):
     losses = AveragerMeter()
     batch_time = AveragerMeter()
     accuracy = AveragerMeter()
-    for iter, (img, label) in enumerate(train_dl):
+    for it, (img, label) in enumerate(train_dl):
         start = time.time()
         img = img.cuda()
         label = label.cuda()
         out = model(img)
         loss = criterion(out, label)
+
+
 
         # 反响传播
         optimizer.zero_grad()
@@ -68,27 +76,31 @@ def train_one_epoch(epoch, model, optimizer, scheduler, criterion, train_dl):
         optimizer.step()
 
         losses.update(loss.item(), len(img))
+        writer.add_scalar("train loss", losses.val, epoch * len(train_dl) + it)
         batch_time.update(time.time() - start, 1)
         _, pred = out.max(dim=1)
         accuracy.update(torch.sum(pred == label).item() / len(img), len(img))
 
-        if iter % 200 == 0:
-            print("Train epoch: %d[%d / %d] loss: %f  acc: %f" %(epoch, iter, len(train_dl), loss.item(), accuracy.avg))
+        if it % 200 == 0:
+            print("Train epoch: %d[%d / %d] loss: %f  acc: %f" %(epoch, it, len(train_dl), loss.item(), accuracy.avg))
 
 
-def eval(epoch, model, criterion, val_dl):
+def eval(epoch, model, criterion, val_dl, writer):
     losses = AveragerMeter()
     accuracy = AveragerMeter()
     with torch.no_grad():
-        for iter, (img, label) in enumerate(val_dl):
+        for it, (img, label) in enumerate(val_dl):
             img = img.cuda()
             label = label.cuda()
-            pred = model(img)
-            loss = criterion(pred, label)
-            losses.update(loss.item())
-            accuracy.update(torch.sum(pred == label), len(img))
+            out = model(img)
+            loss = criterion(out, label)
+            _, pred = out.max(dim=1)
+            losses.update(loss.item(), len(img))
+            accuracy.update(torch.sum(pred == label) / len(img), len(img))
 
-    print("Eval opoch: %d [%d / %d] loss: %f  acc: %d" % epoch, iter, len(val_dl, loss.item(), accuracy.avg))
+        writer.add_scalar("eval accuracy: ", epoch, accuracy.avg)
+
+    print("Eval opoch: %d [%d / %d] loss: %f  acc: %f" %(epoch, it, len(val_dl), loss.item(), accuracy.avg))
 
 def set_random_seed(seed):
     random.seed(seed)
@@ -101,8 +113,10 @@ def set_random_seed(seed):
 if __name__ == "__main__":
     args = parse_args()
     device = torch.device("cuda" if args.gpu else "cpu")
+    writer = tensorboardX.SummaryWriter(logdir=args.save_dir)
 
-    model = vgg16(num_classes=10).cuda()
+    # model = vgg16(num_classes=10).cuda()
+    model = resnet50(num_classes=10).cuda()
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [32, 56], gamma=0.1)
     criterion = torch.nn.CrossEntropyLoss()
@@ -110,8 +124,8 @@ if __name__ == "__main__":
 
     for epoch in range(args.epoch):
         model.train()
-        train_one_epoch(epoch, model, optimizer, lr_scheduler, criterion, train_dl)
+        train_one_epoch(epoch, model, optimizer, lr_scheduler, criterion, train_dl, writer)
         lr_scheduler.step()
         model.eval()
-        eval(epoch, model, criterion, val_dl)
+        eval(epoch, model, criterion, val_dl, writer)
 

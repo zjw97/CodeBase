@@ -1,3 +1,4 @@
-from .vgg import vgg16
+from .vgg import *
+from .resnet import *
 
 __all__ = ["vgg16"]
