@@ -16,14 +16,14 @@ from models.resnet import resnet50
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-b", "--batch_size", type=int, default=16)
+    parser.add_argument("-b", "--batch_size", type=int, default=128)
     parser.add_argument("-gpu", action='store_true', default=False)
-    parser.add_argument("-lr", type=float, default=0.001)
+    parser.add_argument("-lr", type=float, default=0.01)
     parser.add_argument("-epoch", type=int, default=64)
     parser.add_argument("-save_dir", type=str, default="./vgg_cifar10")
     parser.add_argument("-use_bn", action="store_true", default=False)
     parser.add_argument("-pretrained", action="store_true", default=False)
-
+    parser.add_argument("-random_seed", type=int, default=2021)
     args = parser.parse_args()
     return args
 
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     args = parse_args()
     device = torch.device("cuda" if args.gpu else "cpu")
     writer = tensorboardX.SummaryWriter(logdir=args.save_dir)
-
+    set_random_seed(args.random_seed)
     model = vgg16(num_classes=10, pretrained=False, use_bn=True).cuda()
     # model = resnet50(num_classes=10).cuda()
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
