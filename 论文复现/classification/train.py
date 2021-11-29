@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICE"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 import argparse
 import time
 import random
@@ -84,7 +84,7 @@ def train_one_epoch(epoch, model, optimizer, scheduler, criterion, train_dl, wri
         accuracy.update(torch.sum(pred == label).item() / len(img), len(img))
 
         if it % 200 == 0:
-            print("Train epoch: %d[%d / %d] loss: %f  acc: %f" %(epoch, it, len(train_dl), loss.item(), accuracy.avg))
+            print("Train epoch: %d[%d / %d] learning_rate: %f  loss: %f  acc: %f" %(epoch, it, len(train_dl), optimizer.state_dict()["param_groups"][0]['lr'], loss.item(), accuracy.avg))
 
 
 def eval(epoch, model, criterion, val_dl, writer):
@@ -102,7 +102,7 @@ def eval(epoch, model, criterion, val_dl, writer):
 
         writer.add_scalar("eval accuracy: ", epoch, accuracy.avg)
 
-    print("Eval opoch: %d [%d / %d] loss: %f  acc: %f" %(epoch, it, len(val_dl), loss.item(), accuracy.avg))
+    print("Eval epoch: %d [%d / %d] loss: %f  acc: %f" %(epoch, it, len(val_dl), loss.item(), accuracy.avg))
 
 def set_random_seed(seed):
     random.seed(seed)
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     device = torch.device("cuda" if args.gpu else "cpu")
     writer = tensorboardX.SummaryWriter(logdir=args.save_dir)
 
-    model = vgg16(num_classes=10, pretrained=False, use_bn=False).cuda()
+    model = vgg16(num_classes=10, pretrained=False, use_bn=True).cuda()
     # model = resnet50(num_classes=10).cuda()
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [32, 56], gamma=0.1)
