@@ -1,3 +1,5 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICE"] = "1"
 import argparse
 import time
 import random
