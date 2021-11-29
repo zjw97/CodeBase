@@ -14,9 +14,9 @@ from models.resnet import resnet50
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-b", "--batch_size", type=int, default=2)
+    parser.add_argument("-b", "--batch_size", type=int, default=16)
     parser.add_argument("-gpu", action='store_true', default=False)
-    parser.add_argument("-lr", type=float, default=0.01)
+    parser.add_argument("-lr", type=float, default=0.001)
     parser.add_argument("-epoch", type=int, default=64)
     parser.add_argument("-save_dir", type=str, default="./vgg_cifar10")
     parser.add_argument("-use_bn", action="store_true", default=False)
@@ -115,8 +115,8 @@ if __name__ == "__main__":
     device = torch.device("cuda" if args.gpu else "cpu")
     writer = tensorboardX.SummaryWriter(logdir=args.save_dir)
 
-    # model = vgg16(num_classes=10).cuda()
-    model = resnet50(num_classes=10).cuda()
+    model = vgg16(num_classes=10, pretrained=False, use_bn=False).cuda()
+    # model = resnet50(num_classes=10).cuda()
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [32, 56], gamma=0.1)
     criterion = torch.nn.CrossEntropyLoss()

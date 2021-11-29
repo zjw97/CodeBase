@@ -94,6 +94,6 @@ def make_layers(cfg, use_bn=False):
             in_channels = k
     return nn.Sequential(*layers)
 
-def vgg16(num_classes, pretrained=True):
-    model = VGG("vgg16", num_classes=num_classes, use_bn=False, pretrained=pretrained)
+def vgg16(num_classes, pretrained=False, use_bn=False):
+    model = VGG("vgg16", num_classes=num_classes, use_bn=use_bn, pretrained=pretrained)
     return model
