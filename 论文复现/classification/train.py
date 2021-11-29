@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import argparse
 import time
 import random
@@ -12,6 +12,7 @@ import tensorboardX
 
 from models.vgg import vgg16
 from models.resnet import resnet50
+from models.shufflenet import *
 
 
 def parse_args():
@@ -118,8 +119,10 @@ if __name__ == "__main__":
     device = torch.device("cuda" if args.gpu else "cpu")
     writer = tensorboardX.SummaryWriter(logdir=args.save_dir)
     set_random_seed(args.random_seed)
-    model = vgg16(num_classes=10, pretrained=False, use_bn=True).cuda()
+    # model = vgg16(num_classes=10, pretrained=True, use_bn=False).cuda()
     # model = resnet50(num_classes=10).cuda()
+    model = shufflenet().cuda()
+    print(model)
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [32, 56], gamma=0.1)
     criterion = torch.nn.CrossEntropyLoss()
