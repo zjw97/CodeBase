@@ -61,6 +61,7 @@ class VGG(nn.Module):
 
     def random_init_parameter(self, m):
         if isinstance(m, nn.Conv2d):
+            # nn.init.kaiming_normal_(m.weight, "fan_out", nonlinearity="relu")
             nn.init.xavier_normal_(m.weight)
             if m.bias is not None:
                 nn.init.constant_(m.bias, 0)
