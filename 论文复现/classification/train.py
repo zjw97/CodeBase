@@ -17,7 +17,7 @@ from models.shufflenet import *
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-b", "--batch_size", type=int, default=16)
+    parser.add_argument("-b", "--batch_size", type=int, default=128)
     parser.add_argument("-gpu", action='store_true', default=False)
     parser.add_argument("-lr", type=float, default=0.01)
     parser.add_argument("-momentum", type=float, default=0.9)
@@ -35,14 +35,15 @@ def load_cifar10(batch_size=32):
     # TODO： Normalize 参数没有设置
     train_ds = CIFAR10(root="/home/hanglijun/Datasets", train=True,
                        transform=transforms.Compose(
-                           [transforms.Resize((224, 224)),
+                           [transforms.Resize((256, 256)),
+                            transforms.RandomCrop((224, 224)),
                            transforms.ToTensor()]
                        ), download=True)
 
     val_ds = CIFAR10(root="/home/hanglijun/Datasets", train=False,
                      transform=transforms.Compose(
                          [transforms.Resize((224, 224)),
-                         transforms.ToTensor()]
+                          transforms.ToTensor()]
                      ), download=True)
 
     train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
