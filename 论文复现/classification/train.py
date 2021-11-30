@@ -17,7 +17,8 @@ from models.shufflenet import *
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-b", "--batch_size", type=int, default=128)
+    parser.add_argument("-net", type=str, default="vgg16")
+    parser.add_argument("-bs", "--batch_size", type=int, default=128)
     parser.add_argument("-gpu", action='store_true', default=False)
     parser.add_argument("-lr", type=float, default=0.01)
     parser.add_argument("-momentum", type=float, default=0.9)
@@ -30,17 +31,28 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+def get_netword(args):
+    if args.net == "vgg16":
+        model = vgg16(num_classes=10, pretrained=args.pretrained, use_bn=args.use_bn).cuda()
+    elif args.net == "resnet":
+        model = resnet50(num_classes=10).cuda()
+    elif args.net == "shufflenetv1":
+        model = shufflenet().cuda()
+
+    return model
+
+
 
 def load_cifar10(batch_size=32):
     # TODO： Normalize 参数没有设置
-    train_ds = CIFAR10(root="/home/hanglijun/Datasets", train=True,
+    train_ds = CIFAR10(root="/home/zjw/Datasets", train=True,
                        transform=transforms.Compose(
                            [transforms.Resize((256, 256)),
                             transforms.RandomCrop((224, 224)),
                            transforms.ToTensor()]
                        ), download=True)
 
-    val_ds = CIFAR10(root="/home/hanglijun/Datasets", train=False,
+    val_ds = CIFAR10(root="/home/zjw/Datasets", train=False,
                      transform=transforms.Compose(
                          [transforms.Resize((224, 224)),
                           transforms.ToTensor()]
@@ -121,9 +133,8 @@ if __name__ == "__main__":
     device = torch.device("cuda" if args.gpu else "cpu")
     writer = tensorboardX.SummaryWriter(logdir=args.save_dir)
     set_random_seed(args.random_seed)
-    model = vgg16(num_classes=10, pretrained=args.pretrained, use_bn=args.use_bn).cuda()
-    # model = resnet50(num_classes=10).cuda()
-    # model = shufflenet().cuda()
+
+    model = get_netword(args)
     print(model)
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [32, 56], gamma=0.1)
