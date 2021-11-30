@@ -17,7 +17,7 @@ from models.shufflenet import *
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-b", "--batch_size", type=int, default=128)
+    parser.add_argument("-b", "--batch_size", type=int, default=16)
     parser.add_argument("-gpu", action='store_true', default=False)
     parser.add_argument("-lr", type=float, default=0.01)
     parser.add_argument("-weight_decay", type=float, default=1e-4)
@@ -32,13 +32,13 @@ def parse_args():
 
 def load_cifar10(batch_size=32):
     # TODO： Normalize 参数没有设置
-    train_ds = CIFAR10(root="/home/zjw/Datasets", train=True,
+    train_ds = CIFAR10(root="/home/hanglijun/Datasets", train=True,
                        transform=transforms.Compose(
                            [transforms.Resize((224, 224)),
                            transforms.ToTensor()]
                        ), download=True)
 
-    val_ds = CIFAR10(root="/home/zjw/Datasets", train=False,
+    val_ds = CIFAR10(root="/home/hanglijun/Datasets", train=False,
                      transform=transforms.Compose(
                          [transforms.Resize((224, 224)),
                          transforms.ToTensor()]
@@ -119,9 +119,9 @@ if __name__ == "__main__":
     device = torch.device("cuda" if args.gpu else "cpu")
     writer = tensorboardX.SummaryWriter(logdir=args.save_dir)
     set_random_seed(args.random_seed)
-    # model = vgg16(num_classes=10, pretrained=True, use_bn=False).cuda()
+    model = vgg16(num_classes=10, pretrained=True, use_bn=False).cuda()
     # model = resnet50(num_classes=10).cuda()
-    model = shufflenet().cuda()
+    # model = shufflenet().cuda()
     print(model)
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [32, 56], gamma=0.1)
