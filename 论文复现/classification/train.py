@@ -130,7 +130,7 @@ def set_random_seed(seed):
 if __name__ == "__main__":
     args = parse_args()
     device = torch.device("cuda" if args.gpu else "cpu")
-    save_dir = args.save_dir + "_%d"%(args.net)
+    save_dir = args.save_dir + "_%s"%(args.net)
     train_writer = SummaryWriter(logdir=save_dir, comment="train")
     val_writer = SummaryWriter(logdir=save_dir, comment="val")
     set_random_seed(args.random_seed)
