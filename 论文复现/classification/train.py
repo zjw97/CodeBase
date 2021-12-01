@@ -24,7 +24,7 @@ def parse_args():
     parser.add_argument("-momentum", type=float, default=0.9)
     parser.add_argument("-weight_decay", type=float, default=5e-4)
     parser.add_argument("-epoch", type=int, default=64)
-    parser.add_argument("-save_dir", type=str, default="./vgg_cifar10")
+    parser.add_argument("-save_dir", type=str, default="./cifar10")
     parser.add_argument("-use_bn", action="store_true", default=False)
     parser.add_argument("-pretrained", action="store_true", default=False)
     parser.add_argument("-random_seed", type=int, default=2021)
@@ -137,7 +137,7 @@ if __name__ == "__main__":
 
     model = get_netword(args)
     print(model)
-    dummy_input = torch.rand(20, 1, 28, 28).cuda()
+    dummy_input = torch.rand(20, 3, 224, 224).cuda()
     train_writer.add_graph(model, (dummy_input, ))
     val_writer.add_graph(model, (dummy_input, ))
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
