@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
 from torchvision.transforms import transforms
-import tensorboardX
+from torch.utils.tensorboard import SummaryWriter
 
 from models.vgg import vgg16
 from models.resnet import resnet50
@@ -35,7 +35,7 @@ def get_netword(args):
     if args.net == "vgg16":
         model = vgg16(num_classes=10, pretrained=args.pretrained, use_bn=args.use_bn).cuda()
     elif args.net == "resnet":
-        model = resnet50(num_classes=10).cuda()
+        model = resnet50(num_classes=10, pretrained=args.pretrained).cuda()
     elif args.net == "shufflenetv1":
         model = shufflenet().cuda()
 
@@ -86,15 +86,12 @@ def train_one_epoch(epoch, model, optimizer, scheduler, criterion, train_dl, wri
         out = model(img)
         loss = criterion(out, label)
 
-
-
         # 反响传播
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
         losses.update(loss.item(), len(img))
-        writer.add_scalar("train loss", losses.val, epoch * len(train_dl) + it)
         batch_time.update(time.time() - start, 1)
         _, pred = out.max(dim=1)
         accuracy.update(torch.sum(pred == label).item() / len(img), len(img))
@@ -102,6 +99,8 @@ def train_one_epoch(epoch, model, optimizer, scheduler, criterion, train_dl, wri
         if it % 200 == 0:
             print("Train epoch: %d[%d / %d] learning_rate: %f  loss: %f  acc: %f" %(epoch, it, len(train_dl), optimizer.state_dict()["param_groups"][0]['lr'], loss.item(), accuracy.avg))
 
+    writer.add_scalar("loss", losses.avg, epoch)
+    writer.add_scalar("accuracy", accuracy.avg, epoch)
 
 def eval(epoch, model, criterion, val_dl, writer):
     losses = AveragerMeter()
@@ -115,8 +114,8 @@ def eval(epoch, model, criterion, val_dl, writer):
             _, pred = out.max(dim=1)
             losses.update(loss.item(), len(img))
             accuracy.update(torch.sum(pred == label) / len(img), len(img))
-
-        writer.add_scalar("eval accuracy: ", epoch, accuracy.avg)
+    writer.add_scalar("loss", losses.avg, epoch)
+    writer.add_scalar("accuracy: ", accuracy.avg, epoch)
 
     print("Eval epoch: %d [%d / %d] loss: %f  acc: %f" %(epoch, it, len(val_dl), loss.item(), accuracy.avg))
 
@@ -131,11 +130,15 @@ def set_random_seed(seed):
 if __name__ == "__main__":
     args = parse_args()
     device = torch.device("cuda" if args.gpu else "cpu")
-    writer = tensorboardX.SummaryWriter(logdir=args.save_dir)
+    save_dir = args.save_dir + "_%d"%(args.net)
+    train_writer = SummaryWriter(logdir=save_dir, comment="train")
+    val_writer = SummaryWriter(logdir=save_dir, comment="val")
     set_random_seed(args.random_seed)
 
     model = get_netword(args)
     print(model)
+    train_writer.add_graph(model)
+    val_writer.add_scalar(model)
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [32, 56], gamma=0.1)
     criterion = torch.nn.CrossEntropyLoss()
@@ -143,8 +146,8 @@ if __name__ == "__main__":
 
     for epoch in range(args.epoch):
         model.train()
-        train_one_epoch(epoch, model, optimizer, lr_scheduler, criterion, train_dl, writer)
+        train_one_epoch(epoch, model, optimizer, lr_scheduler, criterion, train_dl, train_writer)
         lr_scheduler.step()
         model.eval()
-        eval(epoch, model, criterion, val_dl, writer)
+        eval(epoch, model, criterion, val_dl, val_writer)
 
