@@ -36,11 +36,13 @@ class VGG(nn.Module):
             nn.Linear(7 * 7 * 512, 4096),
             nn.ReLU(True),
             nn.Dropout(),
+            nn.Dropout(0.2),
             nn.Linear(4096, 4096),
             nn.ReLU(True),
-            nn.Dropout(),
+            nn.Dropout(0.2),
             nn.Linear(4096, 1000)
         )
+
 
         if pretrained:
             self.load_pretrained_state_dict()
