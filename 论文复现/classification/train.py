@@ -31,7 +31,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def get_netword(args):
+def get_network(args):
     if args.net == "vgg16":
         model = vgg16(num_classes=10, pretrained=args.pretrained, use_bn=args.use_bn).cuda()
     elif args.net == "resnet":
@@ -45,14 +45,14 @@ def get_netword(args):
 
 def load_cifar10(batch_size=32):
     # TODO： Normalize 参数没有设置
-    train_ds = CIFAR10(root="/home/zjw/Datasets", train=True,
+    train_ds = CIFAR10(root="/home/hanglijun/Datasets", train=True,
                        transform=transforms.Compose(
                            [transforms.Resize((256, 256)),
                             transforms.RandomCrop((224, 224)),
                            transforms.ToTensor()]
                        ), download=True)
 
-    val_ds = CIFAR10(root="/home/zjw/Datasets", train=False,
+    val_ds = CIFAR10(root="/home/hanglijun/Datasets", train=False,
                      transform=transforms.Compose(
                          [transforms.Resize((224, 224)),
                           transforms.ToTensor()]
@@ -135,13 +135,16 @@ if __name__ == "__main__":
     val_writer = SummaryWriter(log_dir=save_dir, comment="val")
     set_random_seed(args.random_seed)
 
-    model = get_netword(args)
+    model = get_network(args)
     print(model)
     dummy_input = torch.rand(20, 3, 224, 224).cuda()
     train_writer.add_graph(model, (dummy_input, ))
     val_writer.add_graph(model, (dummy_input, ))
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [32, 56], gamma=0.1)
+    # torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=1e-3, max_lr=5e-3, step_size_up=500, step_size_down=500,
+    #                                   mode="triangular", gamma=1.0, scale_fn=None, scale_mode="cycle", cycle_momentum=True,
+    #                                   base_momentum=0.8, max_momentum=0.9, last_epoch=-1)
     criterion = torch.nn.CrossEntropyLoss()
     train_dl, val_dl = load_cifar10(args.batch_size)
 
