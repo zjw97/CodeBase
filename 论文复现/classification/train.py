@@ -18,7 +18,7 @@ from models.shufflenet import *
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-net", type=str, default="vgg16")
-    parser.add_argument("-bs", "--batch_size", type=int, default=128)
+    parser.add_argument("-bs", "--batch_size", type=int, default=16)
     parser.add_argument("-gpu", action='store_true', default=False)
     parser.add_argument("-lr", type=float, default=0.01)
     parser.add_argument("-momentum", type=float, default=0.9)
@@ -131,15 +131,14 @@ if __name__ == "__main__":
     args = parse_args()
     device = torch.device("cuda" if args.gpu else "cpu")
     save_dir = args.save_dir + "_%s"%(args.net)
-    train_writer = SummaryWriter(log_dir=save_dir, comment="train")
-    val_writer = SummaryWriter(log_dir=save_dir, comment="val")
+    train_writer = SummaryWriter(log_dir=save_dir + "/train", comment="train")
+    val_writer = SummaryWriter(log_dir=save_dir + "/val", comment="val")
     set_random_seed(args.random_seed)
 
     model = get_network(args)
     print(model)
-    dummy_input = torch.rand(20, 3, 224, 224).cuda()
-    train_writer.add_graph(model, (dummy_input, ))
-    val_writer.add_graph(model, (dummy_input, ))
+    dummy_input = torch.rand(args.batch_size, 3, 224, 224).cuda()
+    train_writer.add_graph(model, input_to_model=dummy_input)
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [32, 56], gamma=0.1)
     # torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=1e-3, max_lr=5e-3, step_size_up=500, step_size_down=500,
