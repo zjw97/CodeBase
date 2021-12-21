@@ -75,9 +75,10 @@ class VGG(nn.Module):
 
     def forward(self, x):
         x = self.features(x)
-        x = self.avg_pool(x)
-        batch_size = x.size(0)
-        x = x.reshape(batch_size, -1)
+        # x = self.avg_pool(x)
+        # batch_size = x.size(0)
+        # x = x.reshape(batch_size, -1)
+        x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x
 
