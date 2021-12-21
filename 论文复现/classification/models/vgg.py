@@ -42,7 +42,7 @@ class VGG(nn.Module):
         #     nn.Linear(4096, 1000)
         # )
         # 适应cifar10 32 * 32的输入尺度
-        # self.classifier = nn.Linear(512, 10)
+        self.classifier = nn.Linear(512, 10)
         if pretrained:
             self.load_pretrained_state_dict()
         else:

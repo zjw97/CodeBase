@@ -28,6 +28,7 @@ def parse_args():
     parser.add_argument("-use_bn", action="store_true", default=False)
     parser.add_argument("-pretrained", action="store_true", default=False)
     parser.add_argument("-random_seed", type=int, default=2021)
+    parser.add_argument("-num_workers", type=int, default=12)
     args = parser.parse_args()
     return args
 
@@ -43,7 +44,7 @@ def get_network(args):
 
 
 
-def load_cifar10(batch_size=32):
+def load_cifar10(batch_size=32, num_workers=12):
     # TODO： Normalize 参数没有设置
     train_ds = CIFAR10(root="/home/hanglijun/Datasets", train=True,
                        transform=transforms.Compose([
@@ -59,8 +60,10 @@ def load_cifar10(batch_size=32):
                           transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2021),)
                           ]), download=True)
 
-    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
-    val_dl = DataLoader(val_ds, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
+    train_dl = DataLoader(train_ds, num_workers=num_workers, batch_size=batch_size,
+                          shuffle=True, pin_memory=True, drop_last=True)
+    val_dl = DataLoader(val_ds, num_workers=num_workers, batch_size=batch_size,
+                        shuffle=True, pin_memory=True, drop_last=True)
     return train_dl, val_dl
 
 class AveragerMeter():
