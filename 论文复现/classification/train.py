@@ -46,17 +46,18 @@ def get_network(args):
 def load_cifar10(batch_size=32):
     # TODO： Normalize 参数没有设置
     train_ds = CIFAR10(root="/home/hanglijun/Datasets", train=True,
-                       transform=transforms.Compose(
-                           [transforms.Resize((256, 256)),
-                            transforms.RandomCrop((224, 224)),
-                           transforms.ToTensor()]
-                       ), download=True)
+                       transform=transforms.Compose([
+                           transforms.RandomCrop((32, 32), padding=4),
+                           transforms.RandomHorizontalFlip(),
+                           transforms.ToTensor(),
+                           transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2021),)
+                       ]), download=True)
 
     val_ds = CIFAR10(root="/home/hanglijun/Datasets", train=False,
-                     transform=transforms.Compose(
-                         [transforms.Resize((224, 224)),
-                          transforms.ToTensor()]
-                     ), download=True)
+                     transform=transforms.Compose([
+                          transforms.ToTensor(),
+                          transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2021),)
+                          ]), download=True)
 
     train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
     val_dl = DataLoader(val_ds, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
@@ -137,7 +138,7 @@ if __name__ == "__main__":
 
     model = get_network(args)
     print(model)
-    dummy_input = torch.rand(args.batch_size, 3, 224, 224).cuda()
+    dummy_input = torch.rand(args.batch_size, 3, 32, 32).cuda()
     train_writer.add_graph(model, input_to_model=dummy_input)
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [32, 56], gamma=0.1)

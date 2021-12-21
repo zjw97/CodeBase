@@ -31,18 +31,18 @@ class VGG(nn.Module):
         self.arch = arch  # 模型结构
         features = make_layers(cfg[arch])
         self.features = features
-        self.avg_pool = nn.AdaptiveAvgPool2d((7, 7))
-        self.classifier = nn.Sequential(
-            nn.Linear(7 * 7 * 512, 4096),
-            nn.ReLU(True),
-            nn.Dropout(),  # default 0.5
-            nn.Linear(4096, 4096),
-            nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(4096, 1000)
-        )
-
-
+        # self.avg_pool = nn.AdaptiveAvgPool2d((7, 7))
+        # self.classifier = nn.Sequential(
+        #     nn.Linear(7 * 7 * 512, 4096),
+        #     nn.ReLU(True),
+        #     nn.Dropout(),  # default 0.5
+        #     nn.Linear(4096, 4096),
+        #     nn.ReLU(True),
+        #     nn.Dropout(),
+        #     nn.Linear(4096, 1000)
+        # )
+        # 适应cifar10 32 * 32的输入尺度
+        self.classifier = nn.Linear(512, 10)
         if pretrained:
             self.load_pretrained_state_dict()
         else:
