@@ -119,7 +119,7 @@ def eval(epoch, model, criterion, val_dl, writer):
             losses.update(loss.item(), len(img))
             accuracy.update(torch.sum(pred == label) / len(img), len(img))
     writer.add_scalar("loss", losses.avg, epoch)
-    writer.add_scalar("accuracy: ", accuracy.avg, epoch)
+    writer.add_scalar("accuracy", accuracy.avg, epoch)
 
     print("Eval epoch: %d [%d / %d] loss: %f  acc: %f" %(epoch, it, len(val_dl), loss.item(), accuracy.avg))
 
@@ -135,6 +135,7 @@ if __name__ == "__main__":
     args = parse_args()
     device = torch.device("cuda" if args.gpu else "cpu")
     save_dir = args.save_dir + "_%s"%(args.net)
+    torch.backends.cudnn.benchmark=True
     train_writer = SummaryWriter(log_dir=save_dir + "/train", comment="train")
     val_writer = SummaryWriter(log_dir=save_dir + "/val", comment="val")
     set_random_seed(args.random_seed)
@@ -144,7 +145,8 @@ if __name__ == "__main__":
     dummy_input = torch.rand(args.batch_size, 3, 32, 32).cuda()
     train_writer.add_graph(model, input_to_model=dummy_input)
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
-    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [32, 56], gamma=0.1)
+    # lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [32, 56], gamma=0.1)
+    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=64)
     # torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=1e-3, max_lr=5e-3, step_size_up=500, step_size_down=500,
     #                                   mode="triangular", gamma=1.0, scale_fn=None, scale_mode="cycle", cycle_momentum=True,
     #                                   base_momentum=0.8, max_momentum=0.9, last_epoch=-1)
