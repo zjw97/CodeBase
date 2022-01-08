@@ -11,6 +11,13 @@ def set_random_seed(seed):
     if torch.cuda.device_count() > 1:
         torch.cuda.manual_seed(seed)
 
+# 对所有显卡上的某个进行统计
+def reduce_all_tensor(tensor):
+    rt = tensor.clone()
+    torch.distributed.all_reduce(rt, op=torch.distributed.reduce_op.SUM)
+    rt /= torch.cuda.device_count()
+    return rt
+
 def generate_anchor_point(feature_scale, step, w, h):
     shift_x = np.arange(0, w * feature_scale, step)
     shift_y = np.arange(0, h * feature_scale, step)
