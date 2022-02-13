@@ -3,13 +3,16 @@
 This file contains primitives for multi-gpu communication.
 This is useful when doing distributed training.
 """
-
 import functools
 import logging
 import numpy as np
 import pickle
 import torch
 import torch.distributed as dist
+
+__all__ = ["get_world_size", "get_rank", "get_local_rank", "get_local_size",
+           "is_main_process", "synchronize", "all_gather", "gather",
+           "shared_random_seed", "reduce_dict"]
 
 _LOCAL_PROCESS_GROUP = None
 """
