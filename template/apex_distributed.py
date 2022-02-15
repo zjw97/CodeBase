@@ -1,3 +1,7 @@
+"""
+reference: git@github.com:NVIDIA/apex.git
+install command: pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
+"""
 import argparse
 import os
 import random

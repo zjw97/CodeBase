@@ -1,3 +1,6 @@
+"""
+reference: https://github.com/tczhangzhi/pytorch-distributed
+"""
 import argparse
 import os
 import random
