@@ -111,7 +111,7 @@ def main():
     args = parser.parse_args()
     args.nprocs = torch.cuda.device_count()
 
-    mp.spawn(main_worker, nprocs=args.nprocs, args=(args.nprocs, args))
+    mp.spawn(main_worker, nprocs=args.nprocsnprocs, args=(args.nprocs, args))
 
 
 def main_worker(local_rank, nprocs, args):

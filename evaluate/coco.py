@@ -40,7 +40,7 @@ coco整体格式
     "category_id": int,
     "segmentation": RLE or [polygon],
     "area": float,
-    "bbox": [x,y,width,height],
+    "bbox": [x,y,width,height],  # top-left, width, height
     "iscrowd": 0 or 1,
     #     "keypoints": [x1,y1,v1,...],  # object_keypoint 注释
     #     "num_keypoints": int,

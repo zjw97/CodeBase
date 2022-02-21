@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image
 import random
 
+__all__ = ["read_img"]
 
 def read_img(img_file, dtype=np.float32, color=True):
 

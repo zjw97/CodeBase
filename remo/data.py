@@ -1,8 +1,9 @@
+import glob
 import os.path
 import random
 from xml.dom.minidom import Document
 import xml.etree.ElementTree as ET
-
+from tqdm import tqdm
 import cv2
 
 from evaluate import draw_rectangle, put_text
@@ -53,22 +54,22 @@ def write_xml(anno, xml_name):
         pNode.appendChild(cid_node)
         # xmin
         xmin_node = doc.createElement("xmin")
-        xmin = doc.createTextNode("%.2f" % anno["boxes"][i]["xmin"])
+        xmin = doc.createTextNode("%d" % anno["boxes"][i]["xmin"])
         xmin_node.appendChild(xmin)
         pNode.appendChild(xmin_node)
         # ymin
         ymin_node = doc.createElement("ymin")
-        ymin = doc.createTextNode("%.2f" % anno["boxes"][i]["ymin"])
+        ymin = doc.createTextNode("%d" % anno["boxes"][i]["ymin"])
         ymin_node.appendChild(ymin)
         pNode.appendChild(ymin_node)
         # xmax
         xmax_node = doc.createElement("xmax")
-        xmax = doc.createTextNode("%.2f" % anno["boxes"][i]["xmax"])
+        xmax = doc.createTextNode("%d" % anno["boxes"][i]["xmax"])
         xmax_node.appendChild(xmax)
         pNode.appendChild(xmax_node)
         # ymax
         ymax_node = doc.createElement("ymax")
-        ymax = doc.createTextNode("%.2f" % anno["boxes"][i]["ymax"])
+        ymax = doc.createTextNode("%d" % anno["boxes"][i]["ymax"])
         ymax_node.appendChild(ymax)
         pNode.appendChild(ymax_node)
         # add this object
@@ -88,10 +89,10 @@ def parse_remo_xml(data_root, xml_path):
     meta["boxes"] = []
     for i in range(meta["num_person"]):
         obj = root.find("Object_%d"%(i+1))
-        xmin = float(obj.find("xmin").text)
-        ymin = float(obj.find("ymin").text)
-        xmax = float(obj.find("xmax").text)
-        ymax = float(obj.find("ymax").text)
+        xmin = int(float(obj.find("xmin").text))
+        ymin = int(float(obj.find("ymin").text))
+        xmax = int(float(obj.find("xmax").text))
+        ymax = int(float(obj.find("ymax").text))
         cid = int(obj.find("cid").text)
         meta["boxes"].append([xmin, ymin, xmax, ymax, cid])
     return meta
@@ -116,11 +117,10 @@ def remo_visualize(data_root, xml_path_list, shuffle=False):
         boxes = meta["boxes"]
         for box in boxes:
             xmin, ymin, xmax, ymax, cid = box[:]
-            xmin = int(xmin * width)
-            ymin = int(ymin * height)
-            xmax = int(xmax * width)
-            ymax = int(ymax * height)
-            img = draw_rectangle(img, (xmin, ymin), (xmax, ymax), (0, 0, 255))
+            if cid != 1:
+                continue
+            img = draw_rectangle(img, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0, 0, 255))
+            # img = draw_rectangle(img, (xmin, ymin), (xmax, ymax), (0, 0, 255))
             put_text(img, str(cid), (xmin, ymax), (0, 0, 255))
         cv2.imshow(img_path, img)
         key = cv2.waitKey(0)
@@ -134,7 +134,56 @@ def remo_visualize(data_root, xml_path_list, shuffle=False):
         cv2.destroyAllWindows()
 
 
+def parse_voc_xml(xml):
+    tree = ET.parse(xml)
+    annotations = tree.getroot()
+    meta = {}
+    # annotations = root.find("annotation")
+    filename = annotations.find("filename").text
+    meta["filename"] = filename
+
+    size = annotations.find("size")
+    width = int(size.find("width").text)
+    meta["width"] = width
+    height = int(size.find("height").text)
+    meta["height"] = height
+    objects = annotations.findall("object")
+    meta["num"] = len(objects)
+    meta["boxes"] = []
+
+    for obj in objects:
+        bndbox = obj.find("bndbox")
+        xmin = int(bndbox.find("xmin").text)
+        ymin = int(bndbox.find("ymin").text)
+        xmax = int(bndbox.find("xmax").text)
+        ymax = int(bndbox.find("ymax").text)
+        meta["boxes"].append({
+            "xmin": xmin,
+            "ymin": ymin,
+            "xmax": xmax,
+            "ymax": ymax,
+            "cid": 1
+        })
+    return meta
+
+if __name__ == "__main__":
+    # visualize bbox
+    data_root = "/home/zjw/Datasets/AIC_Data"
+    xml_file_list = "/home/zjw/Datasets/AIC_Data/Layout/train_PersonWithFaceHeadHand_V0_V0_cont1_V0_cont2_V0_cont3.txt"
+    remo_visualize(data_root, xml_file_list, shuffle=False)
 
 
-
-
+    # voc2remo
+    # data_root = "/home/zjw/Datasets/Multiview_Hand_Fusion_Dataset"
+    # voc_xml_list = glob.glob("/home/zjw/Datasets/Multiview_Hand_Fusion_Dataset/train/*.xml")
+    # f = open(data_root + "/train_hand.txt", "w")
+    # for xml_file in tqdm(voc_xml_list):
+    #     basename = os.path.basename(xml_file)
+    #     meta = parse_voc_xml(xml_file)
+    #     img_path = "images/train/" + meta["filename"].split(".")[0] + ".jpg"
+    #     meta["image_path"] = img_path
+    #     meta["data_set"] = "Multiview_Hand_Fusion_Dataset"
+    #     xml_path = "XML/train/" + basename
+    #     f.write(xml_path + "\n")
+    #     out_xml_path = os.path.join(data_root, xml_path)
+    #     write_xml(meta, out_xml_path)

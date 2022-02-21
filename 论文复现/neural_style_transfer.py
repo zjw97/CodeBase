@@ -26,8 +26,8 @@ def image_loader(image_name):
     image = loader(image).unsqueeze(0)
     return image.to(device, torch.float) # transform
 
-style_img = image_loader("/home/zhangming/zjw/CodeBase/论文复现/data/images/neural-style/candy.jpg")
-content_img = image_loader("/home/zhangming/zjw/CodeBase/论文复现/data/images/neural-style/lion.jpg")
+style_img = image_loader("/home/zjw/CodeBase/论文复现/data/images/neural-style/candy.jpg")
+content_img = image_loader("/home/zjw/CodeBase/论文复现/data/images/neural-style/lion.jpg")
 
 assert style_img.size() == content_img.size(), \
     "we need to import style and content images of the same size"
@@ -67,7 +67,6 @@ def gram_matrix(input):
     # 利用格拉姆矩阵提取风格特征
     # 格拉姆矩阵就是矩阵 乘以 自身的转置
     a, b, c, d = input.size()
-
     features = input.view(a * b, c * d)
     G = torch.mm(features, features.t())
 
@@ -101,7 +100,7 @@ class Normalization(nn.Module):
         return (img - self.mean) / self.std
 
 content_layers_default = ['conv_4']
-style_layers_default = ['conv_1', 'conv_2', 'conv_3', 'conv_4', 'conv_5']
+style_layers_default = ['conv_1', 'conv_2', 'conv_3', 'conv_4']
 
 def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
                                style_img, content_img, content_layers=content_layers_default,
@@ -148,7 +147,8 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
 
     return model, style_losses, content_losses
 
-input_img = content_img.clone()
+# input_img = content_img.clone()
+input_img = torch.randn(1, 3, imsize, imsize).to(device)
 
 plt.figure()
 imshow(input_img, title="Input Image")
@@ -158,7 +158,7 @@ def get_input_optimizer(input_img):
     return optimizer
 
 def run_style_transfer(cnn, normalization_mean, normalization_std, content_img, style_img,
-                       input_img, num_steps=300, style_weight=50000, content_weight=-1):
+                       input_img, num_steps=300, style_weight=50000, content_weight=1):
     print("Building the style transfer model...")
     model, style_losses, content_losses = get_style_model_and_losses(cnn,
         normalization_mean, normalization_std, style_img, content_img)

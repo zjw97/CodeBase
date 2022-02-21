@@ -20,6 +20,8 @@ style_weight = 5e4
 def train(args):
     device = torch.device("cuda" if args.cuda else "cpu")
 
+    writer = SummaryWriter("./models")
+
     np.random.seed(2022)
     torch.random.seed(2022)
 
@@ -61,8 +63,8 @@ def train(args):
             x = x.to(device)
             y = transformer(x)
 
-            x_feature = vgg(x)
-            y_feature = vgg(y)
+            x_feature = vgg(utils.normalize_batch(x))
+            y_feature = vgg(utils.normalize_batch(y))
 
             content_loss = content_weight * mse_loss(y_feature.relu2_2, x_feature.relu2_2)
 
@@ -75,7 +77,18 @@ def train(args):
             loss.backward()
             optimizer.step()
 
-            
+            pbar.set_postfix(**{
+                "iter": i,
+                "content_loss": content_loss,
+                "style_loss": style_loss,
+                "total_loss": loss
+            })
+
+            writer.add_scalar("content loss", content_loss.item(), epoch * len(train_loader) + i)
+            writer.add_scalar("style loss", style_loss.item(), epoch * len(train_loader) + i)
+            writer.add_scalar("total loss", loss.item(), epoch * len(train_loader) + 1)
+
+
 
             pbar.update(1)
 
@@ -91,7 +104,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("subcommond")
 
-    main_parser = parser.add_subparsers("train")
+    main_parser = parser.add_subparsers("")
     train_parser = main_parser.add_parser("train")
     train_parser.add_argument("--style-image", default=None, type=str)
     train_parser.add_argument("--dataset", default=None, type=str)
@@ -103,7 +116,7 @@ def parse_args():
     eval_parser.add_argument("--content-image", default=None, type=str)
     eval_parser.add_argument("--model", default=None, type=str)
 
-    args = parser.parse_args()
+    args = parser.parse_args("train --style-image --dataset /home/hanglijun/zjw/examples/fast_style_transfer/images/train2017")
     if args.subcommond is None:
         print("Error: Please specify either train or eval")
         sys.exit(1)
