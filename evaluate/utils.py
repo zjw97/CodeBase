@@ -75,3 +75,76 @@ def putImgToOne(all_images: list, n_cols=2):
     scale = min(scale_x, scale_y)
     oneImage = cv2.resize(oneImage, dsize=None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
     return oneImage
+
+
+def nothing(*args):
+    pass
+
+def add_track_bar(video_name, pos):
+    cap = cv2.VideoCapture(video_name)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    n_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    cv2.createTrackbar("time", "result", pos, n_frames, nothing)
+
+    while True:
+        t_pos = cv2.getTrackbarPos("time", "result")
+        if t_pos + 1 == pos:  # 如果trackbar的位置没有被拖动, 那么上一次读取图片之后pos指向下一个位置, 此时track bar的位置还为更新
+            cv2.setTrackbarPos("time", "result", pos)
+        else:  # 如果进度条被拖动了, 那么需要重新设置读取图片的点, 进度条的位置不需要修改
+            pos = t_pos
+            cap.set(cv2.CAP_PROP_POS_FRAMES, pos)
+        # 之后就是正常读图片遍历的过程了
+        _, image = cap.read()
+
+
+# 在opencv窗口画图
+def draw_circle(event, x, y, flags, param):
+    # 获取四个滑动条的位置
+    r = cv2.getTrackbarPos('R', 'image')
+    g = cv2.getTrackbarPos('G', 'image')
+    b = cv2.getTrackbarPos('B', 'image')
+    color = (b, g, r)
+
+    global position, drawing, mode
+
+    if event == cv2.EVENT_LBUTTONDOWN:
+        drawing = True
+        position = (x, y)  # 当按下左键是返回起始位置坐标
+
+    elif event == cv2.EVENT_MOUSEMOVE and flags == cv2.EVENT_FLAG_LBUTTON:  # 鼠标左键拖拽
+        if drawing == True:
+            if mode == True:
+                cv2.rectangle(img, position, (x, y), color, -1)  # 绘制矩形
+            else:
+                cv2.circle(img, (x, y), 2, color, -1)  # 绘制圆圈，小圆点连在一起就成了线，3代表了笔画的粗细
+
+    elif event == cv2.EVENT_LBUTTONUP:  # 鼠标松开停止绘画
+        drawing = False
+
+
+# 当按下鼠标时变为True
+drawing = False
+# 如果mode为true时候绘制矩形，按下m变成绘制曲线
+mode = True
+
+img = cv2.imread(r'C:\Users\x\Desktop\12.jpg', cv2.IMREAD_ANYCOLOR)
+cv2.namedWindow('image')
+
+# 创建改变颜色的滑动条
+cv2.createTrackbar('R', 'image', 0, 255, nothing)
+cv2.createTrackbar('G', 'image', 0, 255, nothing)
+cv2.createTrackbar('B', 'image', 0, 255, nothing)
+cv2.setMouseCallback('image', draw_circle)
+
+while (1):
+    cv2.imshow('image', img)
+
+    k = cv2.waitKey(1) & 0xFF
+    if k == ord('m'):
+        mode = not mode
+    elif k == 27:
+        break
+
+cv2.destroyAllWindows()
