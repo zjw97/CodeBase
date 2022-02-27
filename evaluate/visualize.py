@@ -6,7 +6,7 @@ import os
 import cv2
 import json
 
-from evaluate import draw_rectangle, put_text, putImgToOne, color_palette
+from .utils import draw_rectangle, put_text, putImgToOne, color_palette
 
 def parse_coco_annotations(annotations):
     images = annotations["images"]

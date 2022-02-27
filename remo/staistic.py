@@ -5,6 +5,7 @@ import seaborn as sns
 
 from remo.data import parse_remo_xml
 
+
 def generator_csv():
     xml_root_list = [
         "/home/zhangming/Datasets/AIC_REMOCapture",
@@ -63,4 +64,37 @@ def generator_csv():
 
 
 if __name__ == "__main__":
-    pass
+    from tqdm import tqdm
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    data_root = "/home/zjw/Datasets/AIC_REMOCapture"
+    xml_file_list = "/home/zjw/Datasets/AIC_REMOCapture/txt/trainval_AIC_remocap2018053008070827.txt"
+    xml_list = []
+    with open(xml_file_list, "r") as f:
+        for line in f:
+            xml_list.append(os.path.join(data_root, line.strip()))
+
+    width = []
+    height = []
+    for xml_file in xml_list:
+        before = len(width)
+        meta = parse_remo_xml(data_root, xml_file)
+        boxes = meta["boxes"]
+        for box in boxes:
+            xmin, ymin, xmax, ymax, cid = box
+            w = xmax - xmin
+            h = ymax - ymin
+            if w < 10 or h < 10:
+                width.append(w)
+                height.append(w)
+        if len(width) > before:
+            print(xml_file)
+    print(len(width))
+    df = pd.DataFrame({"width": width, "height": height}, index=None)
+    sns.scatterplot(x=df.width, y=df.height, data=df)
+    plt.show()
+
+
+
+
+

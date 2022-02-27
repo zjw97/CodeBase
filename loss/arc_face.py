@@ -6,7 +6,8 @@ import torch.nn.functional as F
 from config.config import CONFIG
 
 class ArcMarginProduct(nn.Module):
-    r"""Implement of large margin arc distance: :
+    r""" paper: https://arxiv.org/abs/1801.07698v3
+        Implement of large margin arc distance: :
         Args:
             in_features: size of each input sample
             out_features: size of each output sample

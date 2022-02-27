@@ -1,3 +1,5 @@
+# https://amaarora.github.io/2020/08/30/gempool.html#gem-pooling
+# paper: https://arxiv.org/abs/1711.02512
 import torch
 from torch import nn
 import torch.nn.functional as F
