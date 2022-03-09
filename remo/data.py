@@ -8,7 +8,7 @@ import cv2
 
 from evaluate import draw_rectangle, put_text
 
-def write_xml(anno, xml_name):
+def write_remo_xml(anno, xml_name):
     # Create the minidom document
     doc = Document()
 
