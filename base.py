@@ -1,6 +1,7 @@
 import os
 import cv2
 import random
+import timeit
 
 import numpy as np
 from tqdm import tqdm
@@ -11,9 +12,13 @@ from skimage.exposure import adjust_gamma
 from remo import parse_remo_xml
 
 transforms = A.Compose([
-    A.RandomBrightnessContrast(brightness_limit=0.5),
+    # A.HueSaturationValue(hue_shift_limit=100, p=1)
+    # A.RandomBrightnessContrast
+    A.RandomBrightnessContrast(brightness_limit=(-0.4, -0.4), p=1),
 ])
 plt.ion()
+
+
 
 if __name__ == "__main__":
     xml_list = []
@@ -32,13 +37,19 @@ if __name__ == "__main__":
         image_path = meta["image_path"]
         image = cv2.imread(image_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        tmp = image.astype("float")
         plt.figure(figsize=(15, 7.5))
         plt.subplot(121)
         plt.imshow(image)
-
         boxes = np.array(meta["boxes"])
         plt.subplot(122)
-        image = transforms(image=image)["image"]
+        mean = np.mean(image)
+        print(timeit.timeit(stmt="import numpy as np"
+                                 "np.mean(image)", ))
+        print("mean brightness", mean)
+        if mean > 90:
+            image = (image * 0.5).astype("uint8")
+            # image = transforms(image=image)["image"]
 
         plt.imshow(image)
         plt.show()

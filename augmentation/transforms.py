@@ -4,6 +4,7 @@ import os
 import cv2
 import random
 import numpy as np
+from tqdm import tqdm
 from remo.data import parse_remo_xml
 from evaluate.visualize import draw_rectangle
 import albumentations as A
@@ -129,7 +130,7 @@ class MotionAffine():
         print("angleB: ", configB["angle"], "transXB: ", configB["dx"], "transYB: ", configB["dy"],
               "scaleB: ", configB["scale"])
 
-        easing = easing_functions.LinearInOut()
+        easing = ef.LinearInOut()
         for i in range(self.seq_length):
             percentage = easing(i / (self.seq_length - 1))
             angle = self.lerp(configA["angle"], configB["angle"], percentage)
@@ -209,21 +210,112 @@ class Step: # Custom easing function for sudden change.
     def __call__(self, value):
         return 0 if value < 0.5 else 1
 
+class RandomPaste:
+    def __init__(self, paste_file_list, scale, prob=1.0, min_box_size=5, ):
+        self.paste_image_list, self.mask_list = self.load_paste_image(paste_file_list)
+        self.scale = scale
+        self.n = len(self.paste_image_list)
+        self.paste_prob = prob
+        self.min_box_size = min_box_size
+
+    def load_paste_image(self, paste_file_list):
+        if isinstance(paste_file_list, str):
+            paste_file_list = [paste_file_list]
+        paste_image_list = []
+        mask_list = []
+        for paste_list in paste_file_list:
+            with open(paste_list, "r") as f:
+                for line in f:
+                    line = line.strip().split(" ")
+                    image_path = line[1].replace("zhangming", "zjw")
+                    mask_path = line[0].replace("zhangming", "zjw")
+                    paste_image_list.append(image_path)
+                    mask_list.append(mask_path)
+        return paste_image_list, mask_list
+
+    def _get_index(self, image, boxes):
+        height, width, c = image.shape
+        num_box = boxes.shape[0]
+        for idx in random.sample(list(range(num_box)), num_box):
+            if boxes[idx, 4] == 3:
+                continue
+            xmin, ymin, xmax, ymax, cid = boxes[idx, :]
+            if (xmax - xmin) * width > self.min_box_size and \
+                    (ymax - ymin) * height > self.min_box_size:
+                return idx
+        # 没有找到符合条件的box
+        return None
+
+    # @timeit
+    def __call__(self, image, boxes):
+        # 有概率不执行
+        if random.random() > self.paste_prob: return image
+
+        h, w, _ = image.shape
+        # boxes = labels.boxes
+        num_box = boxes.shape[0]
+        if num_box == 0:
+            return image
+
+        # 随机选择一个box
+        idx = self._get_index(image, boxes)
+        # 所有的box的长宽都小于min_box_size, 那么不贴图
+        if idx is None:
+            return image
+        xmin, ymin, xmax, ymax, cid = boxes[idx, :]
+        box_width = (xmax - xmin) * w
+        box_height = (ymax - ymin) * h
+        print(box_width, box_height)
+
+        random_idx = random.randint(0, self.n-1)
+        paste_image = cv2.imread(self.paste_image_list[random_idx])  # 贴图
+        mask = cv2.imread(self.mask_list[random_idx])  # mask
+        scale_w = random.uniform(self.scale[0], self.scale[1])
+        scale_h = random.uniform(self.scale[0], self.scale[1])
+        mask_width = int(box_width * scale_w)
+        mask_height = int(box_height * scale_h)
+
+        mask = cv2.resize(mask, (mask_width, mask_height))
+        paste_image = cv2.resize(paste_image, (mask_width, mask_height))
+
+        paste_image *= mask
+
+        paste_x = int(xmin * w + box_width * random.uniform(0, 1 - scale_w))
+        paste_y = int(ymin * h + box_height * random.uniform(0, 1 - scale_h))
+
+        scenic_mask = (~(mask * 255) / 255).astype("uint8")
+        image[paste_y:paste_y + mask_height, paste_x:paste_x + mask_width] *= scenic_mask
+        image[paste_y:paste_y + mask_height, paste_x:paste_x + mask_width] += paste_image
+
+        return image
+
 
 if __name__ == "__main__":
-    import time
-    random_brightness = RandomContrast()
-    # random_brightness_v2 = RandomContrastv2()
-
-    img = cv2.imread("./test.jpg")
-    img_copy = copy.deepcopy(img)
-    t1 = time.time()
-    img = random_brightness(img)
-    print("random_brightness_v1: ", (time.time() - t1) * 1000)
-    t1 = time.time()
-    img_copy = random_brightness_v2(img_copy)
-    print("random_brightness_v2: ", (time.time() - t1) * 1000)
-    cv2.imshow("random_brightness_v1", img)
-    cv2.imshow("random_brightness_v2", img_copy)
-    print((img == img_copy).all())
-    key = cv2.waitKey(0)
+    from remo import parse_remo_xml
+    random.seed(2022)
+    np.random.seed(2022)
+    xml_list = []
+    data_root = "/home/zjw/Datasets/AIC_REMOCapture"
+    with open("/home/zjw/Datasets/AIC_REMOCapture/txt/trainval_AIC_remocap2018053008070827.txt") as f:
+        for line in tqdm(f):
+            xml_list.append(os.path.join(data_root, line.strip()))
+    random.shuffle(xml_list)
+    random_paste = RandomPaste("/home/zjw/Datasets/Lvis_other_dataset_withoutPersonPic/"
+                               "Lvis_other_dataset_withoutPersonPic.txt", scale=[0.5, 0.7])
+    idx = 0
+    while True:
+        meta = parse_remo_xml(data_root, xml_list[idx])
+        print(xml_list[idx])
+        image = cv2.imread(meta["image_path"])
+        boxes = np.array(meta["boxes"], dtype="float")
+        boxes[:, [0, 2]] = boxes[:, [0, 2]] / image.shape[1]
+        boxes[:, [1, 3]] = boxes[:, [1, 3]] / image.shape[0]
+        image = random_paste(image, boxes)
+        cv2.imshow("image", image)
+        key = cv2.waitKey(0)
+        if key == ord('q'):
+            exit()
+        elif key == ord('a'):
+            idx -= 1
+        else:
+            idx += 1
