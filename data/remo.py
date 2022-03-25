@@ -6,6 +6,8 @@ import xml.etree.ElementTree as ET
 import cv2
 
 from tools import *
+REMO_BBOX_LABEL_NAMES = ("person", "hand", "head", "face")
+palette = color_palette(n_colors=len(REMO_BBOX_LABEL_NAMES))
 
 def write_remo_xml(anno, xml_name):
     # Create the minidom document
@@ -116,9 +118,8 @@ def remo_visualize(data_root, xml_path_list, shuffle=False):
         boxes = meta["boxes"]
         for box in boxes:
             xmin, ymin, xmax, ymax, cid = box[:]
-            draw_rectangle(img, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0, 0, 255))
-            # img = draw_rectangle(img, (xmin, ymin), (xmax, ymax), (0, 0, 255))
-            put_text(img, str(cid), (xmin, ymax), (0, 0, 255))
+            draw_rectangle(img, (int(xmin), int(ymin)), (int(xmax), int(ymax)), palette[cid])
+            put_text(img, str(cid), (xmin, ymax), palette[cid])
         cv2.imshow(img_path, img)
         key = cv2.waitKey(0)
         if key == ord("q"):

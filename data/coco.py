@@ -5,6 +5,7 @@ from pycocotools.coco import COCO
 
 from tools.show import *
 
+
 def imshow(coco, img_path):
     imgIds = coco.getImgIds()
     idx = 0
