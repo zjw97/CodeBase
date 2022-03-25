@@ -3,10 +3,9 @@ import os.path
 import random
 from xml.dom.minidom import Document
 import xml.etree.ElementTree as ET
-from tqdm import tqdm
 import cv2
 
-from evaluate import draw_rectangle, put_text
+from tools import *
 
 def write_remo_xml(anno, xml_name):
     # Create the minidom document
@@ -117,9 +116,7 @@ def remo_visualize(data_root, xml_path_list, shuffle=False):
         boxes = meta["boxes"]
         for box in boxes:
             xmin, ymin, xmax, ymax, cid = box[:]
-            if cid != 1:
-                continue
-            img = draw_rectangle(img, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0, 0, 255))
+            draw_rectangle(img, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0, 0, 255))
             # img = draw_rectangle(img, (xmin, ymin), (xmax, ymax), (0, 0, 255))
             put_text(img, str(cid), (xmin, ymax), (0, 0, 255))
         cv2.imshow(img_path, img)
@@ -133,57 +130,8 @@ def remo_visualize(data_root, xml_path_list, shuffle=False):
             line_idx += 1
         cv2.destroyAllWindows()
 
-
-def parse_voc_xml(xml):
-    tree = ET.parse(xml)
-    annotations = tree.getroot()
-    meta = {}
-    # annotations = root.find("annotation")
-    filename = annotations.find("filename").text
-    meta["filename"] = filename
-
-    size = annotations.find("size")
-    width = int(size.find("width").text)
-    meta["width"] = width
-    height = int(size.find("height").text)
-    meta["height"] = height
-    objects = annotations.findall("object")
-    meta["num"] = len(objects)
-    meta["boxes"] = []
-
-    for obj in objects:
-        bndbox = obj.find("bndbox")
-        xmin = int(bndbox.find("xmin").text)
-        ymin = int(bndbox.find("ymin").text)
-        xmax = int(bndbox.find("xmax").text)
-        ymax = int(bndbox.find("ymax").text)
-        meta["boxes"].append({
-            "xmin": xmin,
-            "ymin": ymin,
-            "xmax": xmax,
-            "ymax": ymax,
-            "cid": 1
-        })
-    return meta
-
 if __name__ == "__main__":
     # visualize bbox
     data_root = "/home/zjw/Datasets/AIC_Data"
     xml_file_list = "/home/zjw/Datasets/AIC_Data/Layout/train_PersonWithFaceHeadHand_V0_V0_cont1_V0_cont2_V0_cont3.txt"
     remo_visualize(data_root, xml_file_list, shuffle=False)
-
-
-    # voc2remo
-    # data_root = "/home/zjw/Datasets/Multiview_Hand_Fusion_Dataset"
-    # voc_xml_list = glob.glob("/home/zjw/Datasets/Multiview_Hand_Fusion_Dataset/train/*.xml")
-    # f = open(data_root + "/train_hand.txt", "w")
-    # for xml_file in tqdm(voc_xml_list):
-    #     basename = os.path.basename(xml_file)
-    #     meta = parse_voc_xml(xml_file)
-    #     img_path = "images/train/" + meta["filename"].split(".")[0] + ".jpg"
-    #     meta["image_path"] = img_path
-    #     meta["data_set"] = "Multiview_Hand_Fusion_Dataset"
-    #     xml_path = "XML/train/" + basename
-    #     f.write(xml_path + "\n")
-    #     out_xml_path = os.path.join(data_root, xml_path)
-    #     write_xml(meta, out_xml_path)

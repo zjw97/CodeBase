@@ -138,7 +138,7 @@ def main_worker(local_rank, nprocs, args):
         print("=> using pre-trained model '{}'".format(args.arch))
         model = models.__dict__[args.arch](pretrained=True)
     else:
-        print("=> creating model '{}'".format(args.arch))
+        print("=> creating model '{}'".format( args.arch))
         model = models.__dict__[args.arch]()
 
     torch.cuda.set_device(local_rank)

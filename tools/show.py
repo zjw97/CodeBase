@@ -1,11 +1,37 @@
+# -*- coding: UTF-8 -*-
+import numpy as np
+from PIL import Image
 import cv2
 import numpy as np
 import math
 import seaborn as sns
 
-__all__ = ["color_palette", "draw_rectangle", "put_text", "putImgToOne", "draw_boxes"]
+__all__ = ["draw_rectangle", "put_text", "putImgToOne", "draw_boxes", "color_palette"]
 
+def read_img(img_file, dtype=np.float32, color=True):
 
+    f = Image.open(img_file) # 返回的是一个fp类型
+    try:
+        if color:
+            img = f.convert("RGB")
+        else :
+            img = f.convert("P")
+        img = np.asarray(img, dtype=dtype)
+    finally:
+        if hasattr(f, "close"):
+            f.close()
+
+    if img.ndim == 2:
+        return img[np.newaxis]
+    else: # transpose H, W, C -> C,H, W
+        return img.transpose(2, 0, 1)
+
+def color_palette(palette="hls", n_colors=10):
+    current_pale = sns.color_palette(palette, n_colors)
+    colors = []
+    for i in range(n_colors):
+        colors.append([int(i * 255) for i in current_pale[i]])
+    return colors
 
 def draw_rectangle(image, org1, org2, color, thickness=1):
     cv2.rectangle(img=image, pt1=org1, pt2=org2, color=color, thickness=thickness, lineType=cv2.LINE_4)

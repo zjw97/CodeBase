@@ -1,7 +1,5 @@
 import torch
 
-
-
 def nms(bboxes, scores, threshold=0.5):
     """
     最好先移除置信度低于阈值的prior box不然会很慢
@@ -73,19 +71,3 @@ def calc_iou_tensor(bbox1, bbox2):
 
     iou = inter / (area1 + area2 - inter)
     return iou
-
-
-class AveragerMeter():
-    def __init__(self):
-        self.val = 0
-        self.total = 0
-        self.avg = 0
-        self.sum = 0
-
-    def update(self, val, n):
-        self.val = val
-        self.total += n
-        self.sum += val * n
-        self.avg = self.sum / self.total
-
-

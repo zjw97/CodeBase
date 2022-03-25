@@ -3,10 +3,9 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset
 from albumentations import (
-    HorizontalFlip, VerticalFlip, IAAPerspective, ShiftScaleRotate, CLAHE, RandomRotate90,
-    Transpose, ShiftScaleRotate, Blur, OpticalDistortion, GridDistortion, HueSaturationValue,
-    IAAAdditiveGaussianNoise, GaussNoise, MotionBlur, MedianBlur, IAAPiecewiseAffine, RandomResizedCrop,
-    IAASharpen, IAAEmboss, RandomBrightnessContrast, Flip, OneOf, Compose, Normalize, Cutout, CoarseDropout,
+    HorizontalFlip, VerticalFlip, Transpose, HueSaturationValue,
+    RandomResizedCrop,
+    RandomBrightnessContrast, Compose, Normalize, Cutout, CoarseDropout,
     ShiftScaleRotate, CenterCrop, Resize
 )
 
@@ -15,9 +14,9 @@ import sys
 fmix_path = ""
 sys.path.append(fmix_path)
 # https://github.com/ecs-vlc/FMix
-from fmix import sample_mask, make_low_freq_image, binarise_mask
+from fmix import make_low_freq_image, binarise_mask
 
-from efficient_net.utils import CFG
+from template.efficient_net.utils import CFG
 
 # 以下可用于分类
 # HorizontalFlip, IAAPerspective, ShiftScaleRotate, CLAHE, RandomRotate90,

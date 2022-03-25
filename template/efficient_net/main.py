@@ -4,13 +4,13 @@ import torch
 import torch.nn as nn
 import numpy as np
 from tqdm import tqdm
-from sklearn.model_selection import GroupKFold, StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 from torch.cuda.amp import autocast, GradScaler
 
 
-from efficient_net.model import CassvaImgClassifier
-from efficient_net.data import CassavaDataset, get_train_transforms, get_valid_transforms
-from efficient_net.utils import CFG, seed_everything
+from template.efficient_net.model import CassvaImgClassifier
+from template.efficient_net.data import CassavaDataset, get_train_transforms, get_valid_transforms
+from template.efficient_net.utils import CFG, seed_everything
 
 
 def prepare_dataloader(df, trn_idx, val_idx, data_root='../input/cassava-leaf-disease-classification/train_images/'):

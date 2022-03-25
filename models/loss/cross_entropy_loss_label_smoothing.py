@@ -78,10 +78,6 @@ def mask_cross_entropy_smooth(pred, target, label, reduction='mean', avg_factor=
     return F.binary_cross_entropy_with_logits(
         pred_slice, target, reduction='mean')[None]
 
-
-    
-    
-    
 @LOSSES.register_module
 class CrossEntropyLoss_Smooth(nn.Module):
 
