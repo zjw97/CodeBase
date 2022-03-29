@@ -1,6 +1,7 @@
 import glob
 import os.path
 import random
+from tqdm import tqdm
 from xml.dom.minidom import Document
 import xml.etree.ElementTree as ET
 import cv2
@@ -78,11 +79,12 @@ def write_remo_xml(anno, xml_name):
     with open(xml_name, "wb") as f:
         f.write(doc.toprettyxml(indent='\t', encoding='utf-8'))
 
-def parse_remo_xml(data_root, xml_path):
+def parse_remo_xml(data_root, xml_path, class_label=None):
     tree = ET.parse(xml_path)
     root = tree.getroot()
     meta = {}
-    meta["image_path"] = os.path.join(data_root, root.find("ImagePath").text)
+    meta["image"] = root.find("ImagePath").text
+    meta["file_path"] = os.path.join(data_root, root.find("ImagePath").text)
     meta["width"] = int(root.find("ImageWidth").text)
     meta["height"] = int(root.find("ImageHeight").text)
     meta["num_person"] = int(root.find("NumPerson").text)
@@ -90,13 +92,24 @@ def parse_remo_xml(data_root, xml_path):
     meta["boxes"] = []
     for i in range(meta["num_person"]):
         obj = root.find("Object_%d"%(i+1))
+        cid = int(obj.find("cid").text)
+        if class_label is not None and cid not in class_label:
+            continue
         xmin = int(float(obj.find("xmin").text))
         ymin = int(float(obj.find("ymin").text))
         xmax = int(float(obj.find("xmax").text))
         ymax = int(float(obj.find("ymax").text))
-        cid = int(obj.find("cid").text)
         meta["boxes"].append([xmin, ymin, xmax, ymax, cid])
     return meta
+
+def read_remo_xml_list_file(data_root, xml_file):
+    xml_list = []
+    with open(xml_file, "r") as f:
+        for line in f:
+            line = line.strip()
+            xml_path = os.path.join(data_root, line)
+            xml_list.append((data_root, xml_path))
+    return xml_list
 
 def remo_visualize(data_root, xml_path_list, shuffle=False):
     xml_list = []
@@ -131,8 +144,25 @@ def remo_visualize(data_root, xml_path_list, shuffle=False):
             line_idx += 1
         cv2.destroyAllWindows()
 
+
+
 if __name__ == "__main__":
+    from data.coco import generate_coco_format_anno
+    class_label = [1]
     # visualize bbox
     data_root = "/home/zjw/Datasets/AIC_Data"
-    xml_file_list = "/home/zjw/Datasets/AIC_Data/Layout/train_PersonWithFaceHeadHand_V0_V0_cont1_V0_cont2_V0_cont3.txt"
-    remo_visualize(data_root, xml_file_list, shuffle=False)
+    xml_list_file = "/home/zjw/Datasets/AIC_Data/Layout/val_PersonWithFaceHeadHand_V0_V0_cont1_V0_cont2_V0_cont3.txt"
+
+    # data_root = "/home/zjw/Datasets/Multiview_Hand_Fusion_Dataset"
+    # xml_list_file = "/home/zjw/Datasets/Multiview_Hand_Fusion_Dataset/val_hand.txt"
+    # remo_visualize(data_root, xml_file_list, shuffle=False)
+    xml_list = read_remo_xml_list_file(data_root, xml_list_file)
+
+    annotations = []
+    for root, xml_path in tqdm(xml_list):
+        annotations.append(parse_remo_xml(data_root, xml_path, class_label=class_label))
+
+    save_path = "/home/zjw/REMO/PytorchSSD/AIC_coco_format_valid_anno.json"
+    generate_coco_format_anno("v1.0", "remo hand detection", class_label, annotations, save_path)
+
+
