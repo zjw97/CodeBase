@@ -1,0 +1,1 @@
+from .voc import get_map, get_coco_map
