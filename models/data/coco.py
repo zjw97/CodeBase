@@ -5,10 +5,10 @@ import os
 import time
 from tqdm import tqdm
 from pycocotools.coco import COCO
-
+from tools import color_palette
 from tools.show import *
 
-def imshow(coco, img_path):
+def show_bbox(coco, img_path):
     imgIds = coco.getImgIds()
     idx = 0
     while True:
@@ -102,14 +102,37 @@ def generate_coco_format_anno(version, description, class_label, annotations, sa
             box_id +=1
     json.dump(anno, open(save_path, "w"))
 
+def show_instance_segmentation(anno_path, image_path):
+    palette = color_palette(n_colors=21)
+    coco = COCO(anno_path)
+    image_ids = COCO.getImgIds()
+    idx = 0
+
+    while True:
+        image_id = image_ids[idx]
+        image_name = coco.loadImgs(image_id)[0]["file_name"]
+        image_path = os.path.join(image_path, image_name)
+        image = cv2.imread(image_path)
+        mask_path = image_path.replace("train_img", "train_parsing")
+        mask = cv2.imread(mask_path)
+
+        for i in range(1, 21):
+            tmp_mask = (mask == i)
+
 
 
 if __name__ == "__main__":
-    img_path = '/home/zjw/Datasets/coco2017/train2017'
-    annFile = '/home/zjw/Datasets/coco2017/annotations/instances_train2017.json'
+    # img_path = '/home/zjw/Datasets/coco2017/train2017'
+    # annFile = '/home/zjw/Datasets/coco2017/annotations/instances_train2017.json'
+    #
+    # coco = COCO(annFile)
+    # show_bbox(coco, img_path)
 
-    coco = COCO(annFile)
-    imshow(coco, img_path)
+    img_path = ""
+    anno_path = ""
+
+    coco = COCO(anno_path)
+    show_segmentation(anno_path, img_path)
 
 
 

@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 import cv2
 
 from tools import *
+from models.data.utils import center_crop_remove_outbound_box
 REMO_BBOX_LABEL_NAMES = ("person", "hand", "head", "face")
 palette = color_palette(n_colors=len(REMO_BBOX_LABEL_NAMES))
 
@@ -90,6 +91,7 @@ def parse_remo_xml(data_root, xml_path, class_label=None):
     meta["num_person"] = int(root.find("NumPerson").text)
     meta["dataset"] = root.find("DataSet").text
     meta["boxes"] = []
+
     for i in range(meta["num_person"]):
         obj = root.find("Object_%d"%(i+1))
         cid = int(obj.find("cid").text)
@@ -100,6 +102,7 @@ def parse_remo_xml(data_root, xml_path, class_label=None):
         xmax = int(float(obj.find("xmax").text))
         ymax = int(float(obj.find("ymax").text))
         meta["boxes"].append([xmin, ymin, xmax, ymax, cid])
+    meta["boxes"] = center_crop_remove_outbound_box(meta["width"], meta["height"], meta["boxes"])
     return meta
 
 def read_remo_xml_list_file(data_root, xml_file):
@@ -147,22 +150,28 @@ def remo_visualize(data_root, xml_path_list, shuffle=False):
 
 
 if __name__ == "__main__":
-    from data.coco import generate_coco_format_anno
-    class_label = [1]
+    from models.data.coco import generate_coco_format_anno
+    class_label = REMO_BBOX_LABEL_NAMES
     # visualize bbox
-    data_root = "/home/zjw/Datasets/AIC_Data"
-    xml_list_file = "/home/zjw/Datasets/AIC_Data/Layout/val_PersonWithFaceHeadHand_V0_V0_cont1_V0_cont2_V0_cont3.txt"
+    # data_root = "/home/zjw/Datasets/AIC_Data"
+    # xml_list_file = "/home/zjw/Datasets/AIC_Data/Layout/val_PersonWithFaceHeadHand_V0_V0_cont1_V0_cont2_V0_cont3.txt"
+    # save_path = "/home/zjw/REMO/PytorchSSD/AIC_coco_format_valid_anno_rm_outbound_box.json"
 
-    # data_root = "/home/zjw/Datasets/Multiview_Hand_Fusion_Dataset"
-    # xml_list_file = "/home/zjw/Datasets/Multiview_Hand_Fusion_Dataset/val_hand.txt"
+    data_root = "/home/zjw/Datasets/Multiview_Hand_Fusion_Dataset"
+    xml_list_file = "/home/zjw/Datasets/Multiview_Hand_Fusion_Dataset/val_hand.txt"
+    save_path = "/home/zjw/REMO/PytorchSSD/Multiview_Hand_Fusion_coco_format_valid_anno.json"
+
     # remo_visualize(data_root, xml_file_list, shuffle=False)
     xml_list = read_remo_xml_list_file(data_root, xml_list_file)
 
     annotations = []
+    idx = 0
     for root, xml_path in tqdm(xml_list):
-        annotations.append(parse_remo_xml(data_root, xml_path, class_label=class_label))
+        if idx == 25:
+            z = 1
+        annotations.append(parse_remo_xml(data_root, xml_path, class_label=[1]))
+        idx += 1
 
-    save_path = "/home/zjw/REMO/PytorchSSD/AIC_coco_format_valid_anno.json"
-    generate_coco_format_anno("v1.0", "remo hand detection", class_label, annotations, save_path)
+    generate_coco_format_anno("v2.0", "remo hand detection", class_label, annotations, save_path)
 
 

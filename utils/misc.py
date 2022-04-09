@@ -5,28 +5,36 @@
 '''
 import errno
 import os
-import sys
-import time
-import math
+import logging
 import torch
 import torch.nn as nn
 import torch.nn.init as init
-from torch.autograd import Variable
 
 __all__ = ['get_mean_and_std', 'init_params', 'mkdir_p', 'AverageMeter']
 
+# Set up logging and load config options
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# logging only in rank 0
+def logging_rank(sstr, distributed=True, local_rank=0):
+    if distributed and local_rank == 0:
+        logger.info(sstr)
+    elif not distributed:
+        logger.info(sstr)
+    return 0
 
 def get_mean_and_std(dataset):
     '''Compute the mean and std value of dataset.'''
-    dataloader = trainloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=2)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=2)
 
     mean = torch.zeros(3)
     std = torch.zeros(3)
-    print('==> Computing mean and std..')
+    print('Computing mean and std..')
     for inputs, targets in dataloader:
         for i in range(3):
-            mean[i] += inputs[:,i,:,:].mean()
-            std[i] += inputs[:,i,:,:].std()
+            mean[i] += inputs[:, i, :, :].mean()
+            std[i] += inputs[:, i, :, :].std()
     mean.div_(len(dataset))
     std.div_(len(dataset))
     return mean, std
