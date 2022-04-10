@@ -5,9 +5,8 @@ import pycocotools.mask as mask_util
 from collections import defaultdict
 import matplotlib.pyplot as plt
 
-from utils.timer import Timer
+# from utils.timer import Timer
 import utils.colormap as colormap_utils
-from rcnn.core.config import cfg
 
 _GRAY = [218, 227, 218]
 _GREEN = [18, 127, 15]
@@ -188,23 +187,18 @@ def vis_keypoints(img, kps, show_parss=False):
     return cv2.addWeighted(img, 1.0 - cfg.VIS.SHOW_KPS.KPS_ALPHA, kp_mask, cfg.VIS.SHOW_KPS.KPS_ALPHA, 0)
 
 
-def vis_parsing(img, parsing, colormap, show_segms=True):
+def vis_parsing(img, parsing, colormap, parsing_alpha=0.4, show_segms=True):
     """Visualizes a single binary parsing."""
     img = img.astype(np.float32)
     idx = np.nonzero(parsing)
 
-    parsing_alpha = cfg.VIS.SHOW_PARSS.PARSING_ALPHA
     colormap = colormap_utils.dict2array(colormap)
     parsing_color = colormap[parsing.astype(np.int)]
 
-    border_color = cfg.VIS.SHOW_PARSS.BORDER_COLOR
-    border_thick = cfg.VIS.SHOW_PARSS.BORDER_THICK
+    border_color = (255, 255, 255)
+    border_thick = 1
 
     img[idx[0], idx[1], :] *= (1.0 - parsing_alpha)
-    # img[idx[0], idx[1], :] += alpha * parsing_color
-    # print(img.shape)
-    # print(parsing_alpha)
-    # print(parsing_color.shape)
     img += parsing_alpha * parsing_color
 
     if cfg.VIS.SHOW_PARSS.SHOW_BORDER and not show_segms:
@@ -294,9 +288,9 @@ def vis_uv(img, uv, bbox):
     return img
 
 
-def get_instance_parsing_colormap(rgb=False):
-    instance_colormap = eval('colormap_utils.{}'.format(cfg.VIS.SHOW_BOX.COLORMAP))
-    parsing_colormap = eval('colormap_utils.{}'.format(cfg.VIS.SHOW_PARSS.COLORMAP))
+def get_instance_parsing_colormap(color_map, rgb=False):
+    instance_colormap = eval('colormap_utils.{}'.format(color_map))
+    parsing_colormap = eval('colormap_utils.{}'.format(color_map))
     if rgb:
         instance_colormap = colormap_utils.dict_bgr2rgb(instance_colormap)
         parsing_colormap = colormap_utils.dict_bgr2rgb(parsing_colormap)
@@ -390,15 +384,19 @@ def vis_one_image_opencv(im, config, boxes, classes, segms=None, keypoints=None,
 
     return im
 
+# def vis_parsing(img, alpha):
+
+
 if __name__ == "__main__":
     data_root = "/home/zjw/Datasets/CIHP/train_img"
-    colormap = get_instance_parsing_colormap()[1]
+    colormap = get_instance_parsing_colormap("CIHP20")[1]
     from pycocotools.coco import COCO
     coco = COCO("/home/zjw/Datasets/CIHP/annotations/CIHP_train.json")
     ImgIds = coco.getImgIds()
     for img_id in ImgIds:
         file_name = coco.loadImgs(img_id)[0]["file_name"]
         image = cv2.imread(os.path.join(data_root, file_name))
+        image[image!=20] = 0
         annos = coco.loadAnns(coco.getAnnIds(imgIds=img_id))
         for anno in annos:
             parsing = cv2.imread(os.path.join(data_root.replace("train_img", "train_parsing"), anno["parsing"]), cv2.IMREAD_GRAYSCALE)
@@ -408,3 +406,24 @@ if __name__ == "__main__":
         key = cv2.waitKey(0)
         if key == ord("q"):
             exit()
+
+    # from glob import glob
+    # data_root = "/home/zjw/SSD_DATA/matting-data/VideoMatte240K_JPEG_SD/train/fgr"
+    # image_list = glob(os.path.join(data_root, "*/*.jpg"))
+    # idx = 0
+    # while True:
+    #     image_path = image_list[idx]
+    #     alpha_path = image_path.replace("fgr", "pha")
+    #     image = cv2.imread(image_path).astype("float")
+    #     alpha = cv2.imread(alpha_path).astype("float")
+    #     matting_image = image * alpha / 255
+    #     image = image.astype("uint8")
+    #     matting_image = matting_image.astype("uint8")
+    #     alpha = alpha.astype("uint8")
+    #     cv2.imshow("image", image)
+    #     cv2.imshow("matting", matting_image)
+    #     cv2.imshow("alpha", alpha)
+    #     key = cv2.waitKey(0)
+    #     if key == ord("q"):
+    #         exit()
+    #     idx += 1
