@@ -44,11 +44,14 @@ def guidedfilter(I, p, r, eps):
 
 if __name__ == "__main__":
     import cv2
-    image = cv2.imread("/home/zjw/CodeBase/论文复现/data/images/neural-style/candy.jpg", cv2.IMREAD_GRAYSCALE)
+    # image = cv2.imread("/home/zjw/CodeBase/论文复现/data/images/neural-style/candy.jpg", cv2.IMREAD_GRAYSCALE)
+    image = cv2.imread("/home/zjw/Datasets/CIHP/train_img/0030291.jpg", cv2.IMREAD_GRAYSCALE)
+    mask = cv2.imread("/home/zjw/Datasets/CIHP/train_seg/0030291.png", cv2.IMREAD_GRAYSCALE)
+    mask[mask != 0] = 1
     image = image.astype("float") / 255
-    i = image
+    i = mask
     # i = np.zeros_like(image)
-    i = np.ones_like(image)
+    # i = np.ones_like(image)
     img = guidedfilter(i, image, 2, 1e-8)
     img = (img * 255).astype("uint8")
     cv2.imshow("raw image", image)

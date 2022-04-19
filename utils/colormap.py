@@ -1,5 +1,12 @@
 import numpy as np
+import seaborn as sns
 
+def color_palette(palette="hls", n_colors=10):
+    current_pale = sns.color_palette(palette, n_colors)
+    colors = []
+    for i in range(n_colors):
+        colors.append([int(i * 255) for i in current_pale[i]])
+    return colors
 
 def colormap(rgb=False):
     color_list = np.array(
@@ -205,3 +212,10 @@ def array2dict(colorarray):
         colordict[i] = list(colorarray[i])
     return colordict
 
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    palette = color_palette()
+    cm = dict2array(CIHP20)
+    cm = (cm.astype("float") / 255).tolist()
+    sns.palplot(cm)
+    plt.show()
