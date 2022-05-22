@@ -8,13 +8,13 @@ import seaborn as sns
 
 __all__ = ["draw_rectangle", "put_text", "putImgToOne", "draw_boxes", "color_palette"]
 
-def read_img(img_file, dtype=np.float32, color=True):
 
-    f = Image.open(img_file) # 返回的是一个fp类型
+def read_img(img_file, dtype=np.float32, color=True):
+    f = Image.open(img_file)  # 返回的是一个fp类型
     try:
         if color:
             img = f.convert("RGB")
-        else :
+        else:
             img = f.convert("P")
         img = np.asarray(img, dtype=dtype)
     finally:
@@ -23,8 +23,9 @@ def read_img(img_file, dtype=np.float32, color=True):
 
     if img.ndim == 2:
         return img[np.newaxis]
-    else: # transpose H, W, C -> C,H, W
+    else:  # transpose H, W, C -> C,H, W
         return img.transpose(2, 0, 1)
+
 
 def color_palette(palette="hls", n_colors=10):
     current_pale = sns.color_palette(palette, n_colors)
@@ -33,28 +34,32 @@ def color_palette(palette="hls", n_colors=10):
         colors.append([int(i * 255) for i in current_pale[i]])
     return colors
 
+
 def draw_rectangle(image, org1, org2, color, thickness=1):
     cv2.rectangle(img=image, pt1=org1, pt2=org2, color=color, thickness=thickness, lineType=cv2.LINE_4)
+
 
 def put_text(img, text, org, color=(0, 0, 255), thickness=1):
     cv2.putText(img, text, org, fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1.,
                 color=color, thickness=thickness, lineType=cv2.LINE_8)
 
+
 def draw_boxes(image, boxes, conf=None, label=None):
     palette = color_palette()
     num_box = boxes.shape[0]
-    if boxes.shape[1]== 5:
+    if boxes.shape[1] == 5:
         for i in range(num_box):
             xmin, ymin, xmax, ymax, cid = boxes[i, :]
             if cid not in [1, 3]:
                 continue
             draw_rectangle(image, (xmin, ymin), (xmax, ymax), color=palette[cid], thickness=1)
-            put_text(image, "%d"%(cid), (xmin, ymin), color=palette[cid], thickness=1)
+            put_text(image, f"{cid}", (xmin, ymin), color=palette[cid], thickness=1)
     else:
         for i in range(num_box):
             xmin, ymin, xmax, ymax = boxes[i, :]
             draw_rectangle(image, (xmin, ymin), (xmax, ymax), color=palette[label[i]], thickness=1)
-            put_text(image, "%.4f"%(conf[i]), (xmin, ymin), color=palette[label[i]], thickness=1)
+            put_text(image, "%.4f" % (conf[i]), (xmin, ymin), color=palette[label[i]], thickness=1)
+
 
 def putImgToOne(all_images: list, n_cols=2):
     # 设置显示窗口的最大大小
@@ -110,7 +115,6 @@ def putImgToOne(all_images: list, n_cols=2):
     scale = min(scale_x, scale_y)
     oneImage = cv2.resize(oneImage, dsize=None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
     return oneImage
-
 
 # def nothing(*args):
 #     pass
