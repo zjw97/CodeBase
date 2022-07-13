@@ -113,3 +113,15 @@ def create_annotation_info(annotation_id, image_id, category_info, binary_mask,
     }
 
     return annotation_info
+
+def decode_rle(rle):
+    H, W = rle['size']
+    msk = np.zeros(H * W, dtype=np.uint8)
+    encoding = rle['counts']
+    skip = 0
+    for i in range(0, len(encoding) - 1, 2):
+        skip += encoding[i]
+        draw = encoding[i + 1]
+        msk[skip : skip + draw] = 255
+        skip += draw
+    return msk.reshape(W, H).transpose()
